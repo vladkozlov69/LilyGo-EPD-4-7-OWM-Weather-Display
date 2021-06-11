@@ -35,6 +35,8 @@ enum alignment {LEFT, RIGHT, CENTER};
 #define barchart_on   true
 #define barchart_off  false
 
+#define DONE_PIN 12
+
 boolean LargeIcon   = true;
 boolean SmallIcon   = false;
 #define Large  20           // For icon drawing
@@ -76,6 +78,7 @@ GFXfont  currentFont;
 uint8_t *framebuffer;
 
 void BeginSleep() {
+  digitalWrite(DONE_PIN, HIGH);
   epd_poweroff_all();
   UpdateLocalTime();
   SleepTimer = (SleepDuration * 60 - ((CurrentMin % SleepDuration) * 60 + CurrentSec)) + Delta; //Some ESP32 have a RTC that is too fast to maintain accurate time, so add an offset
@@ -95,6 +98,21 @@ boolean SetupTime() {
 }
 
 uint8_t StartWiFi() {
+  // Set your Static IP address
+  IPAddress local_IP(192, 168, 0, 184);
+  // Set your Gateway IP address
+  IPAddress gateway(192, 168, 0, 1);
+
+  IPAddress subnet(255, 255, 0, 0);
+  IPAddress primaryDNS(8, 8, 8, 8);   //optional
+  IPAddress secondaryDNS(8, 8, 4, 4); //optional
+
+  // Configures static IP address
+  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
+    Serial.println("STA Failed to configure");
+  }
+
+
   Serial.println("\r\nConnecting to: " + String(ssid));
   IPAddress dns(8, 8, 8, 8); // Use Google DNS
   WiFi.disconnect();
@@ -123,6 +141,8 @@ void StopWiFi() {
 }
 
 void InitialiseSystem() {
+  pinMode(DONE_PIN, OUTPUT);
+  digitalWrite(DONE_PIN, LOW);
   StartTime = millis();
   Serial.begin(115200);
   while (!Serial);
@@ -236,6 +256,7 @@ bool DecodeWeather(WiFiClient& json, String Type) {
         if (WxForecast[r].High > WxConditions[0].High) WxConditions[0].High = WxForecast[r].High; // Get Highest temperature for next 24Hrs
         if (WxForecast[r].Low  < WxConditions[0].Low)  WxConditions[0].Low  = WxForecast[r].Low;  // Get Lowest  temperature for next 24Hrs
       }
+      WxForecast[r].Period            = list[r]["dt_txt"].as<char*>();                    Serial.println("Peri: "+String(WxForecast[r].Period));
     }
     //------------------------------------------
     float pressure_trend = WxForecast[0].Pressure - WxForecast[2].Pressure; // Measure pressure slope between ~now and later
@@ -271,7 +292,6 @@ bool obtainWeatherData(WiFiClient & client, const String & RequestType) {
   HTTPClient http;
   //api.openweathermap.org/data/2.5/RequestType?lat={lat}&lon={lon}&appid={API key}
   String uri = "/data/2.5/" + RequestType + "?lat=" + Latitude + "&lon=" + Longitude + "&appid=" + apikey + "&mode=json&units=" + units + "&lang=" + Language;
-  if (RequestType == "onecall") uri += "&exclude=minutely,hourly,alerts,daily";
   http.begin(client, server, 80, uri); //http.begin(uri,test_root_ca); //HTTPS example connection
   int httpCode = http.GET();
   if (httpCode == HTTP_CODE_OK) {
@@ -472,13 +492,18 @@ void Display_UVIndexLevel(int x, int y, float UVI) {
 void DisplayForecastWeather(int x, int y, int index, int fwidth) {
   x = x + fwidth * index;
   DisplayConditionsSection(x + fwidth / 2 - 5, y + 85, WxForecast[index].Icon, SmallIcon);
-  setFont(OpenSans10B);
+  setFont(OpenSans12B);
+  Serial.println("DisplayForecastWeather");
+  Serial.println(WxForecast[index].Period);
   Serial.println(WxForecast[index].Dt);
   Serial.println(WxConditions[0].FTimezone);
+  Serial.println(String(ConvertUnixTime(WxForecast[index].Dt)));
   Serial.println(String(ConvertUnixTime(WxForecast[index].Dt + WxConditions[0].FTimezone)));
-  drawString(x + fwidth / 2, y + 30, String(ConvertUnixTime(WxForecast[index].Dt).substring(0, 5)), CENTER);
+  //drawString(x + fwidth / 2, y + 30, WxForecast[index].Period.substring(11, 16), LEFT);
+  drawString(x + fwidth / 2 - 10, y + 30, String(ConvertUnixTime(WxForecast[index].Dt).substring(0, 5)), CENTER);
   //drawString(x + fwidth / 2, y + 30, String(ConvertUnixTime(WxForecast[index].Dt + WxConditions[0].FTimezone).substring(0, 5)), CENTER);
-  drawString(x + fwidth / 2, y + 130, String(WxForecast[index].High, 0) + "°/" + String(WxForecast[index].Low, 0) + "°", CENTER);
+  //drawString(x + fwidth / 2, y + 130, String(WxForecast[index].High, 0) + "°/" + String(WxForecast[index].Low, 0) + "°", CENTER);
+  drawString(x + fwidth / 2, y + 130, String((WxForecast[index].High + WxForecast[index].Low)/2, 0) + "°", CENTER);
 }
 
 double NormalizedMoonPhase(int d, int m, int y) {
