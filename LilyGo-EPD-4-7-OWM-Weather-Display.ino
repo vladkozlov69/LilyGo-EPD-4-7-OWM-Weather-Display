@@ -79,6 +79,7 @@ uint8_t *framebuffer;
 
 void BeginSleep() {
   digitalWrite(DONE_PIN, HIGH);
+  delay(200);
   epd_poweroff_all();
   UpdateLocalTime();
   SleepTimer = (SleepDuration * 60 - ((CurrentMin % SleepDuration) * 60 + CurrentSec)) + Delta; //Some ESP32 have a RTC that is too fast to maintain accurate time, so add an offset
@@ -98,6 +99,35 @@ boolean SetupTime() {
 }
 
 uint8_t StartWiFi() {
+  Serial.print("\r\nConnecting to: "); Serial.println(String(ssid));
+  IPAddress dns(8, 8, 8, 8); // Google DNS
+  WiFi.disconnect();
+  WiFi.mode(WIFI_STA); // switch off AP
+  WiFi.setAutoConnect(true);
+  WiFi.setAutoReconnect(true);
+  WiFi.begin(ssid, password);
+  unsigned long start = millis();
+  uint8_t connectionStatus;
+  bool AttemptConnection = true;
+  while (AttemptConnection) {
+    connectionStatus = WiFi.status();
+    if (millis() > start + 15000) { // Wait 15-secs maximum
+      AttemptConnection = false;
+    }
+    if (connectionStatus == WL_CONNECTED || connectionStatus == WL_CONNECT_FAILED) {
+      AttemptConnection = false;
+    }
+    delay(50);
+  }
+  if (connectionStatus == WL_CONNECTED) {
+    wifi_signal = WiFi.RSSI(); // Get Wifi Signal strength now, because the WiFi will be turned off to save power!
+    Serial.println("WiFi connected at: " + WiFi.localIP().toString());
+  }
+  else Serial.println("WiFi connection *** FAILED ***");
+  return connectionStatus;
+}
+
+uint8_t StartWiFi_old() {
   // Set your Static IP address
   IPAddress local_IP(192, 168, 0, 184);
   // Set your Gateway IP address
@@ -120,17 +150,34 @@ uint8_t StartWiFi() {
   WiFi.setAutoConnect(true);
   WiFi.setAutoReconnect(true);
   WiFi.begin(ssid, password);
-  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.printf("STA: Failed!\n");
-    WiFi.disconnect(false);
-    delay(500);
-    WiFi.begin(ssid, password);
+
+  uint8_t connectTimeoutCounter = 10;
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    if (connectTimeoutCounter > 0)
+    {
+      delay(1000);
+      Serial.println(F("Connecting to WiFi.."));
+      connectTimeoutCounter--;
+    }
+    else
+    {
+      break;
+    }
   }
-  if (WiFi.status() == WL_CONNECTED) {
-    wifi_signal = WiFi.RSSI(); // Get Wifi Signal strength now, because the WiFi will be turned off to save power!
-    Serial.println("WiFi connected at: " + WiFi.localIP().toString());
-  }
-  else Serial.println("WiFi connection *** FAILED ***");
+  // int wifi_retries = 5;
+  // if (WiFi.waitForConnectResult() != WL_CONNECTED && wifi_retries > 0) {
+  //   Serial.printf("STA: Failed!\n");
+  //   wifi_retries--;
+  //   WiFi.disconnect(false);
+  //   delay(500);
+  //   WiFi.begin(ssid, password);
+  // }
+  // if (WiFi.status() == WL_CONNECTED) {
+  //   wifi_signal = WiFi.RSSI(); // Get Wifi Signal strength now, because the WiFi will be turned off to save power!
+  //   Serial.println("WiFi connected at: " + WiFi.localIP().toString());
+  // }
+  // else Serial.println("WiFi connection *** FAILED ***");
   return WiFi.status();
 }
 
@@ -256,7 +303,8 @@ bool DecodeWeather(WiFiClient& json, String Type) {
         if (WxForecast[r].High > WxConditions[0].High) WxConditions[0].High = WxForecast[r].High; // Get Highest temperature for next 24Hrs
         if (WxForecast[r].Low  < WxConditions[0].Low)  WxConditions[0].Low  = WxForecast[r].Low;  // Get Lowest  temperature for next 24Hrs
       }
-      WxForecast[r].Period            = list[r]["dt_txt"].as<char*>();                    Serial.println("Peri: "+String(WxForecast[r].Period));
+      // WxForecast[r].Period            = list[r]["dt_txt"].as<char*>();                    
+      // Serial.println("Peri: "+String(WxForecast[r].Period));
     }
     //------------------------------------------
     float pressure_trend = WxForecast[0].Pressure - WxForecast[2].Pressure; // Measure pressure slope between ~now and later
@@ -494,7 +542,7 @@ void DisplayForecastWeather(int x, int y, int index, int fwidth) {
   DisplayConditionsSection(x + fwidth / 2 - 5, y + 85, WxForecast[index].Icon, SmallIcon);
   setFont(OpenSans12B);
   Serial.println("DisplayForecastWeather");
-  Serial.println(WxForecast[index].Period);
+  // Serial.println(WxForecast[index].Period);
   Serial.println(WxForecast[index].Dt);
   Serial.println(WxConditions[0].FTimezone);
   Serial.println(String(ConvertUnixTime(WxForecast[index].Dt)));
