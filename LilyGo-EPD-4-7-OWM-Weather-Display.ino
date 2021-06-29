@@ -731,8 +731,8 @@ void DrawPressureAndTrend(int x, int y, float pressure, String slope) {
 
 void DisplayStatusSection(int x, int y, int rssi) {
   setFont(OpenSans8B);
-  DrawRSSI(x + 305, y + 15, rssi);
-  DrawBattery(x + 150, y);
+  DrawRSSI(x + 308, y + 15, rssi);
+  DrawBattery(x + 140, y);
 }
 
 void DrawRSSI(int x, int y, int rssi) {
@@ -794,7 +794,7 @@ void DrawBattery(int x, int y) {
     drawRect(x + 25, y - 14, 40, 15, Black);
     fillRect(x + 65, y - 10, 4, 7, Black);
     fillRect(x + 27, y - 12, 36 * percentage / 100.0, 11, Black);
-    drawString(x + 85, y - 14, String(percentage) + "%  " + String(voltage, 1) + "v", LEFT);
+    drawString(x + 80, y - 14, String(percentage) + "%  " + String(voltage, 2) + "v", LEFT);
   }
 }
 
