@@ -57,7 +57,7 @@ float rain_readings[max_readings]        = {0};
 float snow_readings[max_readings]        = {0};
 
 long SleepDuration   = 60; // Sleep time in minutes, aligned to the nearest minute boundary, so if 30 will always update at 00 or 30 past the hour
-int  WakeupHour      = 8;  // Wakeup after 07:00 to save battery power
+int  WakeupHour      = 7;  // Wakeup after 07:00 to save battery power
 int  SleepHour       = 23; // Sleep  after 23:00 to save battery power
 long StartTime       = 0;
 long SleepTimer      = 0;
@@ -407,7 +407,7 @@ void DisplayWeather() {                          // 4.7" e-paper display is 960x
   DisplayMainWeatherSection(320, 110);           // Centre section of display for Location, temperature, Weather report, current Wx Symbol
   DisplayWeatherIcon(835, 140);                  // Display weather icon scale = Large;
   DisplayForecastSection(285, 220);              // 3hr forecast boxes
-  DisplayGraphSection(320, 220);                 // Graphs of pressure, temperature, humidity and rain or snowfall
+  DisplayGraphSection(220);                 // Graphs of pressure, temperature, humidity and rain or snowfall
 }
 
 void DisplayGeneralInfoSection() {
@@ -647,7 +647,7 @@ void DisplayForecastSection(int x, int y) {
   } while (f < 8);
 }
 
-void DisplayGraphSection(int x, int y) {
+void DisplayGraphSection(int y) {
   int r = 0;
   do { // Pre-load temporary arrays with with data - because C parses by reference and remember that[1] has already been converted to I units
     if (Units == "I") pressure_readings[r] = WxForecast[r].Pressure * 0.02953;   else pressure_readings[r] = WxForecast[r].Pressure;
