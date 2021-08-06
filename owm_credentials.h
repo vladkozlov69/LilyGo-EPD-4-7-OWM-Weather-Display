@@ -41,3 +41,11 @@ int  daylightOffset_sec = 3600; // In the UK DST is +1hr or 3600-secs, other cou
 //const char* Timezone = "NZST-12NZDT,M9.5.0,M4.1.0/3";      // Auckland
 //const char* Timezone = "EET-2EEST,M3.5.5/0,M10.5.5/0";     // Asia
 //const char* Timezone = "ACST-9:30ACDT,M10.1.0,M4.1.0/3":   // Australia
+
+const char accuServer[] = "dataservice.accuweather.com";
+const char accuLocation[] = "2-242405_1_AL";
+
+const char climacellServer[] = "data.climacell.co";
+const char climacellTimezone[] = "Europe/Chisinau";
+const char climacellFieldsWeather[] = "solarGHI,temperature,temperatureApparent,dewPoint,humidity,windSpeed,windDirection,pressureSurfaceLevel,precipitationIntensity,precipitationType,precipitationProbability,visibility,cloudCover,uvIndex,uvHealthConcern,weatherCode";
+const char climacellFieldsAstro[] = "sunriseTime,sunsetTime,moonPhase";
