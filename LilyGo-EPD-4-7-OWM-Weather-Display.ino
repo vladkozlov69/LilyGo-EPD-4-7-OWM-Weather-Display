@@ -106,8 +106,9 @@ boolean SetupTime() {
 }
 
 uint8_t StartWiFi() {
+#ifdef STATIC_IP  
     // Set your Static IP address
-  IPAddress local_IP(192, 168, 0, 184);
+  IPAddress local_IP(192, 168, 0, 183);
   // Set your Gateway IP address
   IPAddress gateway(192, 168, 0, 1);
 
@@ -119,6 +120,7 @@ uint8_t StartWiFi() {
   if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
     Serial.println("STA Failed to configure");
   }
+#endif
 
   Serial.print("\r\nConnecting to: "); Serial.println(String(ssid));
   IPAddress dns(8, 8, 8, 8); // Google DNS
