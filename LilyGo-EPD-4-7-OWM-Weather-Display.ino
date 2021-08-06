@@ -77,9 +77,9 @@ long Delta           = 30; // ESP32 rtc speed compensation, prevents display at 
 #include "sunset.h"
 #include "uvi.h"
 
-//#define USE_OWM 1
-#define USE_CLIMACELL 1
-#define USE_ACCUWEATHER 1
+#define USE_OWM 1
+//#define USE_CLIMACELL 1
+//#define USE_ACCUWEATHER 1
 
 GFXfont  currentFont;
 uint8_t *framebuffer;
@@ -275,7 +275,7 @@ void DisplayGeneralInfoSection() {
   setFont(OpenSans10B);
   drawString(5, 2, City, LEFT);
   setFont(OpenSans10B);
-  drawString(400, 2, date_str + "  @   " + time_str, LEFT);
+  drawString(400, 2, date_str + "  @  " + time_str, LEFT);
 }
 
 void DisplayWeatherIcon(int x, int y) {
@@ -579,7 +579,7 @@ void DrawPressureAndTrend(int x, int y, float pressure, String slope) {
 void DisplayStatusSection(int x, int y, int rssi) {
   setFont(OpenSans10B);
   DrawRSSI(x + 308, y + 15, rssi);
-  DrawBattery(x + 140, y);
+  DrawBattery(x + 120, y);
 }
 
 void DrawRSSI(int x, int y, int rssi) {
