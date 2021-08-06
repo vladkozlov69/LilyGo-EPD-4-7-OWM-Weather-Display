@@ -13,8 +13,8 @@ const char server[] = "api.openweathermap.org";
 //Set your location according to OWM locations
 String City             = "Chisinau";                      // Your home city See: http://bulk.openweathermap.org/sample/
 String Country          = "MD";                            // Your _ISO-3166-1_two-letter_country_code country code, on OWM find your nearest city and the country code is displayed
-String Latitude         = "47.003670";                         // Latitude of your location in decimal degrees
-String Longitude        = "28.907089";                         // Longitude of your location in decimal degrees
+String Latitude         = "47.00556";                         // Latitude of your location in decimal degrees
+String Longitude        = "28.8575";                         // Longitude of your location in decimal degrees
                                                            // https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
 String Language         = "EN";                            // NOTE: Only the weather description is translated by OWM
                                                            // Examples: Arabic (AR) Czech (CZ) English (EN) Greek (EL) Persian(Farsi) (FA) Galician (GL) Hungarian (HU) Japanese (JA)
