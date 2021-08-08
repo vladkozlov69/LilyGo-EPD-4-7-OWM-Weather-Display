@@ -232,7 +232,7 @@ void setup() {
       WiFiClientSecure secureClient;
       while ((RxWeather == false || RxCurrent == false || RxForecast == false) && Attempts <= 2) { // Try up-to 2 time for Weather and Forecast data
 #ifdef USE_OWM        
-        if (RxWeather  == false) RxWeather  = obtain_wx_data_owm(client, "weather");
+        if (RxWeather  == false) RxWeather  = obtain_wx_data_owm(client, "onecall");
         if (RxForecast == false) RxForecast = obtain_wx_data_owm(client, "forecast");
 #endif
 
