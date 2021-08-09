@@ -16,6 +16,8 @@
 #include "forecast_record.h"
 #include "lang.h"
 
+#include <NetworkManager.h>
+
 #define SCREEN_WIDTH   EPD_WIDTH
 #define SCREEN_HEIGHT  EPD_HEIGHT
 
@@ -36,6 +38,7 @@ enum alignment {LEFT, RIGHT, CENTER};
 #define barchart_off  false
 
 #define DONE_PIN 12
+#define SETUP_PIN 34
 
 boolean LargeIcon   = true;
 boolean SmallIcon   = false;
@@ -77,9 +80,10 @@ long Delta           = 30; // ESP32 rtc speed compensation, prevents display at 
 #include "sunset.h"
 #include "uvi.h"
 
-#define USE_OWM 1
-//#define USE_CLIMACELL 1
-//#define USE_ACCUWEATHER 1
+Preferences preferences;
+
+NetworkSettings settings;
+NetworkManager nm(&preferences, &Serial, &settings);
 
 GFXfont  currentFont;
 uint8_t *framebuffer;
@@ -230,22 +234,35 @@ void setup() {
       bool RxCurrent = false;
       WiFiClient client;   // wifi client object
       WiFiClientSecure secureClient;
-      while ((RxWeather == false || RxCurrent == false || RxForecast == false) && Attempts <= 2) { // Try up-to 2 time for Weather and Forecast data
-#ifdef USE_OWM        
-        if (RxWeather  == false) RxWeather  = obtain_wx_data_owm(client, "onecall");
-        if (RxForecast == false) RxForecast = obtain_wx_data_owm(client, "forecast");
-#endif
+      while ((RxWeather == false || RxCurrent == false || RxForecast == false) && Attempts <= 2) 
+      { 
+        // Try up-to 2 time for Weather and Forecast data
+        if (settings.climacell_key.length() > 0)
+        {
+          if (RxWeather  == false) RxWeather = obtain_wx_data_climacell(secureClient, "current,1h", &current_time, 3 * max_readings, 
+            settings.climacell_key, settings.latitude, settings.longitude, settings.iana_tz);
+          if (RxForecast  == false) RxForecast = obtain_wx_data_climacell(secureClient, "1d", &current_time, 3 * max_readings,
+            settings.climacell_key, settings.latitude, settings.longitude, settings.iana_tz);
+        }
 
-#ifdef USE_CLIMACELL
-        if (RxWeather  == false) RxWeather = obtain_wx_data_climacell(secureClient, "current,1h", &current_time, 72);
-        if (RxForecast  == false) RxForecast = obtain_wx_data_climacell(secureClient, "1d", &current_time, 72);
-#endif
+        if (settings.owm_key.length() > 0)
+        {
+          if (RxWeather  == false) RxWeather  = obtain_wx_data_owm(client, "onecall", 
+            settings.latitude, settings.longitude, settings.owm_key);
+          if (RxForecast == false) RxForecast = obtain_wx_data_owm(client, "forecast",
+            settings.latitude, settings.longitude, settings.owm_key);
+        }
 
-#ifdef USE_ACCUWEATHER
-        if (RxCurrent  == false) RxCurrent  = obtain_wx_data_accuweather(client, "currentconditions");
-#else
-        RxCurrent = RxWeather;
-#endif
+        if (settings.accu_key.length() > 0 && settings.accu_loc.length() > 0)
+        {
+          if (RxCurrent  == false) RxCurrent  = obtain_wx_data_accuweather(client, "currentconditions", 
+            settings.accu_loc, settings.accu_key);
+        }
+        else
+        {
+          RxCurrent = true;
+        }
+
         Attempts++;
       }
       Serial.println("Received all weather data...");
